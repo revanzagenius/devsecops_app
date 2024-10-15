@@ -9,6 +9,16 @@ def show_button(button_name, user_role):
         if st.button(button_name, use_container_width=True):
             if button_name.lower() == 'design':
                 st.session_state.page = 'design_page'
+            if button_name.lower() == 'develop':
+                st.session_state.page = 'develop_page'
+            if button_name.lower() == 'build':
+                st.session_state.page = 'build_page'
+            if button_name.lower() == 'test':
+                st.session_state.page = 'test_page'
+            if button_name.lower() == 'deploy':
+                st.session_state.page = 'deploy_page'
+            if button_name.lower() == 'monitor':
+                st.session_state.page = 'monitor_page'
             else:
                 st.write(button_name)
 
@@ -20,7 +30,7 @@ def get_all_projects():
         query = """
         SELECT 
             p.project_id,
-            p.nama_project,
+            p.nama_project as nama_project, 
             u.username as PIC,
             ss_prev.deskripsi as previous,
             ssd.deskripsi as current,
@@ -50,14 +60,44 @@ def get_all_projects():
         conn.close()
 
 def display_all_projects(projects):
+    st.write("All Projects:")
+    st.write('---')
+    col1, col2, col3, col4, col5, col6 = st.columns([1,3,3,3,3,3])
+    with col1:
+        st.write('No')
+    with col2:
+        st.write('Nama Project')
+    with col3:
+        st.write('PIC Project')
+    with col4:
+        st.write('Previous Stage')
+    with col5:
+        st.write('Current Stage')
+    with col6:
+        st.write('Next Stage')
+    st.write('---')
     if projects:
-        df = pd.DataFrame(projects)
-        columns_order = ['nama_project', 'PIC', 'previous', 'current', 'next', 'remarks', 'evidence']
-        df = df[columns_order]
-        st.write("All Projects:")
-        st.dataframe(df, hide_index=True)
-    else:
-        st.write("No projects found.")
+        for idx, project in enumerate(projects, start=1):
+            col1, col2, col3, col4, col5, col6 = st.columns([1,3,3,3,3,3])
+            with col1:
+                st.write(idx)
+            with col2:
+                st.write(project['nama_project'])
+            with col3:
+                st.write(project['PIC'])
+            with col4:
+                st.write(project['previous'])
+            with col5:
+                st.write(project['current'])
+            with col6:
+                st.write(project['next'])
+    # if projects:
+    #     df = pd.DataFrame(projects)
+    #     columns_order = ['nama_project', 'PIC', 'previous', 'current', 'next', 'remarks', 'evidence']
+    #     df = df[columns_order]
+    #     st.dataframe(df, hide_index=True)
+    # else:
+    #     st.write("No projects found.")
 
 def main_page():
     if st.button('Back'):

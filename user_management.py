@@ -38,7 +38,7 @@ def add_new_user():
         username = st.text_input("Username")
         email = st.text_input("Email")
         password = st.text_input("Password", type="password")
-        role = st.selectbox("Role", ["admin", "design", "develop", "build", "test", "deploy", "monitor", "pm"])
+        role = st.selectbox("Role", ["admin", "design", "develop", "build", "test", "deploy", "monitor", "pm", "ciso"])
         
         if st.form_submit_button("Add User"):
             conn = get_database_connection()

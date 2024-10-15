@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from db_utils import get_database_connection 
+from db_utils import get_database_connection,  upload_file_to_ftp, download_file_from_ftp
 from datetime import datetime
 import streamlit as st
 import random
@@ -10,17 +10,12 @@ from io import BytesIO
 import ftplib
 
 
-file_directory = 'uploads'
-if not os.path.exists(file_directory):
-    os.makedirs(file_directory)
 
 
 
 def create_evidence_form(id_detail_design, status_options):
     st.subheader('Create Evidence')
-
     tgl_waktu = datetime.now()
-
     st.write(f"Waktu saat ini: {tgl_waktu.strftime('%Y-%m-%d %H:%M:%S')}")
 
     status_id = st.selectbox("Status", list(status_options.keys()), format_func=lambda x: status_options[x])
@@ -28,22 +23,15 @@ def create_evidence_form(id_detail_design, status_options):
     uploaded_file = st.file_uploader("Upload File", type=["pdf"])
 
     if uploaded_file:
-        file_path = os.path.join(file_directory, uploaded_file.name)
+        file_path = os.path.join(uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
-
-        # Connect to the FTP server
         ftp = ftplib.FTP('ftp.devsecopsplatform.xyz')
         ftp.login(user='devsecops@devsecopsplatform.xyz', passwd='hamdanryuz123')
-
-        # Upload the file
         with open(file_path, 'rb') as f:
             ftp.storbinary(f'STOR {uploaded_file.name}', f)
-
-        # Close the FTP connection
         ftp.quit()
 
-        # Remove the local file
         os.remove(file_path)
 
     if st.button("Create"):
@@ -177,23 +165,20 @@ def secure_sdlc_page():
             with col5:
                 if row['evidance'] != '-':
                     file_name = row['evidance'].replace('\\', '/')
-                    ftp = ftplib.FTP('ftp.devsecopsplatform.xyz')
-                    ftp.login(user='devsecops@devsecopsplatform.xyz', passwd='hamdanryuz123')
-
-                    buffer = BytesIO()
-                    def callback(data):
-                        buffer.write(data)
-
-                    ftp.retrbinary(f'RETR {file_name}', callback)
-                    ftp.quit()
+                    file_data = download_file_from_ftp(file_name)
                     new_file_name = f"secureSDLC_{row['tgl']}.pdf"
-                    st.download_button(":material/picture_as_pdf:", data=buffer.getvalue(), file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
+                    st.download_button(":material/picture_as_pdf:", data=file_data, file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
 
                 else:
                     st.write('-')
             
             with col6:
-                st.write(row['status'])
+                if row['status'] == 'Pending':
+                    st.markdown(f"<p style='color: red;'>{row['status']}</p>", unsafe_allow_html=True)
+                elif row['status'] == 'On Process' :
+                    st.markdown(f"<p style='color: yellow;'>{row['status']}</p>", unsafe_allow_html=True)
+                elif row['status'] == 'Complete' :
+                    st.markdown(f"<p style='color: green;'>{row['status']}</p>", unsafe_allow_html=True)
             with col7:
                 if st.button(':material/insert_drive_file:', key=f"create_{idx}"):
                     st.session_state.create_evidence = {
@@ -216,8 +201,6 @@ def secure_sdlc_page():
 
     conn.close()
     
-
-
 
 def history_secure_sdlc(id_detail_design):
     if st.button('Back'):
@@ -281,15 +264,17 @@ def history_secure_sdlc(id_detail_design):
             with col5:
                 st.write(result['remarks'])
             with col6:
-                st.write(result['status'])
+                if result['status'] == 'Pending':
+                    st.markdown(f"<p style='color: red;'>{result['status']}</p>", unsafe_allow_html=True)
+                elif result['status'] == 'On Process' :
+                    st.markdown(f"<p style='color: yellow;'>{result['status']}</p>", unsafe_allow_html=True)
+                elif result['status'] == 'Complete' :
+                    st.markdown(f"<p style='color: green;'>{result['status']}</p>", unsafe_allow_html=True)
             with col7:
-                # st.write(result['evidance'])
                 if result['evidance'] != '-':
-                    file_path = result['evidance']
-                    with open(file_path, "rb") as f:
-                        file_data = f.read()
-                    formatted_time = result['tgl']
-                    new_file_name = f"secureSDLC_{formatted_time}.pdf"
+                    file_name = result['evidance'].replace('\\', '/')
+                    file_data = download_file_from_ftp(file_name)
+                    new_file_name = f"secureSDLC_{result['tgl']}.pdf"
                     st.download_button(":material/picture_as_pdf:", data=file_data, file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
                 else:
                     st.write('-')
@@ -360,15 +345,17 @@ def history_threat_model(id_detail_design):
             with col5:
                 st.write(result['remarks'])
             with col6:
-                st.write(result['status'])
+                if result['status'] == 'Pending':
+                    st.markdown(f"<p style='color: red;'>{result['status']}</p>", unsafe_allow_html=True)
+                elif result['status'] == 'On Process' :
+                    st.markdown(f"<p style='color: yellow;'>{result['status']}</p>", unsafe_allow_html=True)
+                elif result['status'] == 'Complete' :
+                    st.markdown(f"<p style='color: green;'>{result['status']}</p>", unsafe_allow_html=True)
             with col7:
-                # st.write(result['evidance'])
                 if result['evidance'] != '-':
-                    file_path = result['evidance']
-                    with open(file_path, "rb") as f:
-                        file_data = f.read()
-                    formatted_time = result['tgl']
-                    new_file_name = f"secureSDLC_{formatted_time}.pdf"
+                    file_name = result['evidance'].replace('\\', '/')
+                    file_data = download_file_from_ftp(file_name)
+                    new_file_name = f"ThreatModel_{result['tgl']}.pdf"
                     st.download_button(":material/picture_as_pdf:", data=file_data, file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
                 else:
                     st.write('-')
@@ -465,21 +452,18 @@ def threat_model_page():
             with col5:
                 if row['evidance'] != '-':
                     file_name = row['evidance'].replace('\\', '/')
-                    ftp = ftplib.FTP('ftp.devsecopsplatform.xyz')
-                    ftp.login(user='devsecops@devsecopsplatform.xyz', passwd='hamdanryuz123')
-
-                    buffer = BytesIO()
-                    def callback(data):
-                        buffer.write(data)
-
-                    ftp.retrbinary(f'RETR {file_name}', callback)
-                    ftp.quit()
-                    new_file_name = f"secureSDLC_{row['tgl']}.pdf"
-                    st.download_button(":material/picture_as_pdf:", data=buffer.getvalue(), file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
+                    file_data = download_file_from_ftp(file_name)
+                    new_file_name = f"ThreatModel_{row['tgl']}.pdf"
+                    st.download_button(":material/picture_as_pdf:", data=file_data, file_name=new_file_name, mime="application/pdf", key=f"download_button_{idx}")
                 else:
                     st.write('-')
             with col6:
-                st.write(row['status'])
+                if row['status'] == 'Pending':
+                    st.markdown(f"<p style='color: red;'>{row['status']}</p>", unsafe_allow_html=True)
+                elif row['status'] == 'On Process' :
+                    st.markdown(f"<p style='color: yellow;'>{row['status']}</p>", unsafe_allow_html=True)
+                elif row['status'] == 'Complete' :
+                    st.markdown(f"<p style='color: green;'>{row['status']}</p>", unsafe_allow_html=True)
             with col7:
                 if st.button(':material/insert_drive_file:', key=f"create_{idx}"):
                     st.session_state.create_evidence = {
