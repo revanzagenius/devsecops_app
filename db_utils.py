@@ -93,7 +93,9 @@ def render_page(jenis_id, page_name, pdf_prefix, stage):
     cursor.execute("SELECT status_id, deskripsi FROM status_stage")
     status_options = {row['status_id']: row['deskripsi'] for row in cursor.fetchall()}
 
+
     render_table_headers()
+
 
     st.write("---")
     if results:
@@ -214,9 +216,16 @@ def create_evidence_form(id_detail_stage, status_options, stage):
         st.rerun()
 
 def display_history(id_detail_stage, page_name, back_page_name, file_prefix, stage):
-    if st.button('Back'):
-        st.session_state.page = back_page_name
-        st.rerun()
+    user_role = st.session_state.user_role
+    user_id = st.session_state.user_id
+    if user_role == 'ciso':
+        if st.button('Back'):
+            st.session_state.page = 'ciso'
+            st.rerun()
+    else:
+        if st.button('Back'):
+            st.session_state.page = back_page_name
+            st.rerun()
 
     st.subheader(f'History {page_name}')
 
@@ -297,11 +306,31 @@ def display_history(id_detail_stage, page_name, back_page_name, file_prefix, sta
 
     conn.close()
 
+def generate_random_string(length=4):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def render_table_headers_ciso():
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([4, 3, 3, 3, 3, 3, 2])
+    with col1:
+        st.write('Jenis Stage')
+    with col2:
+        st.write('PIC Stage')
+    with col3:
+        st.write('PIC Project')
+    with col4:
+        st.write('Remarks')
+    with col5:
+        st.write('Evidance')
+    with col6:
+        st.write('Status')
+    with col7:
+        st.write('History')
+
 def render_table_row_ciso(row, status_options, idx, pdf_prefix, stage):
-    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([4, 3, 3, 3, 3, 3, 2, 2])
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([4, 3, 3, 3, 3, 3, 2])
     
     with col1:
-        st.write(row['nama_project'])
+        st.write(row['ddj'])
     with col2:
         st.write(row[f'pic_{stage}'])
     with col3:
@@ -309,11 +338,19 @@ def render_table_row_ciso(row, status_options, idx, pdf_prefix, stage):
     with col4:
         st.write(row['remarks'])
     with col5:
-        st.write('Evidence')
+        if row['evidance'] != '-':
+            file_name = row['evidance'].replace('\\', '/')
+            file_data = download_file_from_ftp(file_name)
+            new_file_name = f"{pdf_prefix}_{row['tgl']}.pdf"
+            st.download_button(":material/picture_as_pdf:", data=file_data, file_name=new_file_name, mime="application/pdf", key=f"download_button_{generate_random_string()}")
+        else:
+            st.write('-')
     with col6:
-        color = {'Pending': 'red', 'On Process': 'yellow', 'Complete': 'green'}.get(row['status'], 'black')
-        st.markdown(f"<p style='color: {color};'>{row['status']}</p>", unsafe_allow_html=True)
+        status = row['status'] if row['status'] else '-'
+        color = {'Pending': 'red', 'On Process': 'yellow', 'Complete': 'green', '-':'white'}.get(status, 'black')
+        st.markdown(f"<p style='color: {color};'>{status}</p>", unsafe_allow_html=True)
     with col7:
-        st.write('Insert')
-    with col8:
-        st.write('history')
+        if st.button(":material/history:", key=f"history_button_{idx}_{row['nama_project']}_{row[f'id_detail_{stage}']}"):
+                st.session_state[f'id_detail_{stage}'] = row[f'id_detail_{stage}']
+                # st.session_state.page = 'history_secure_coding' 
+                st.rerun()
