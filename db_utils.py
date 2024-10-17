@@ -83,7 +83,7 @@ def render_page(jenis_id, page_name, pdf_prefix, stage):
     if user_role == 'admin':
         query = base_query + " ORDER BY ed.tgl DESC"
         cursor.execute(query, (jenis_id,))
-    elif user_role == 'develop':
+    elif user_role in ('develop', 'design', 'build','test','deploy','monitor'):
         query = base_query + " AND d.pic = %s ORDER BY ed.tgl DESC"
         cursor.execute(query, (jenis_id, user_id))
 
@@ -330,7 +330,7 @@ def render_table_row_ciso(row, status_options, idx, pdf_prefix, stage):
     col1, col2, col3, col4, col5, col6, col7 = st.columns([4, 3, 3, 3, 3, 3, 2])
     
     with col1:
-        st.write(row['ddj'])
+        st.write(row['jd'])
     with col2:
         st.write(row[f'pic_{stage}'])
     with col3:

@@ -18,7 +18,7 @@ def main_page():
         st.session_state.page = 'audit_page'
     if col3.button('Monitor', use_container_width=True):
         # st.session_state.page = 'monitor_page'
-        st.write('button_name')
+        st.write('')
     if col4.button('Patch', use_container_width=True):
         st.session_state.page = 'patch_page'
 

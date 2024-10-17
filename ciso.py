@@ -133,7 +133,8 @@ def get_data(stage, project):
             COALESCE(ed.evidance, '-') AS evidance,
             COALESCE(ed.tgl, '-') AS tgl,
             COALESCE(ss.deskripsi, '-') AS status,
-            dd.jenis_id as ddj
+            dd.jenis_id as ddj,
+            j.deskripsi_jenis as jd
         FROM detail_{stage} dd
         LEFT JOIN {stage} d ON dd.id_{stage} = d.{stage}_id
         LEFT JOIN project p ON d.{stage}_id = p.{stage}_id
@@ -149,6 +150,7 @@ def get_data(stage, project):
             )
         ) ed ON dd.id_detail_{stage} = ed.id_detail_{stage}
         LEFT JOIN status_stage ss ON ed.status_id = ss.status_id
+        LEFT JOIN jenis j ON dd.jenis_id = j.jenis_id
         WHERE dd.id_{stage} = %s AND p.project_id = %s
     """
     cursor.execute(query, (project[f'{stage}_id'], project['project_id']))
