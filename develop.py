@@ -27,7 +27,7 @@ def main_page():
         st.session_state.page = 'repository_access_control_page'
 
 def history_secure_coding(id_detail_develop):
-    display_history(id_detail_develop, 'Secure SDLC', 'secure_coding_page', 'secure_coding', 'develop')
+    display_history(id_detail_develop, 'Secure Coding', 'secure_coding_page', 'secure_coding', 'develop')
 
 def history_code_authentication(id_detail_develop):
     display_history(id_detail_develop, 'Code Authentication', 'code_authentication_page', 'code_authentication', 'develop')

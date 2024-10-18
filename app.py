@@ -2,7 +2,7 @@ import streamlit as st
 import mysql.connector
 import project, user_management, stage, ciso
 from db_utils import get_database_connection
-import design, develop, build, test, deploy, monitor
+import design, develop, build, test, deploy, monitor, history_ciso
 st.set_page_config(layout='wide')
 
 def logout():
@@ -132,7 +132,7 @@ page_functions = {
     'history_audit' : lambda: monitor.history_audit(st.session_state.id_detail_monitor),
     'history_monitor' : lambda: monitor.history_monitor(st.session_state.id_detail_monitor),
     'history_patch' : lambda: monitor.history_patch(st.session_state.id_detail_monitor),
-
+    'history_ciso' : history_ciso.main_page
 
 }
 

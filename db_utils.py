@@ -351,6 +351,8 @@ def render_table_row_ciso(row, status_options, idx, pdf_prefix, stage):
         st.markdown(f"<p style='color: {color};'>{status}</p>", unsafe_allow_html=True)
     with col7:
         if st.button(":material/history:", key=f"history_button_{idx}_{row['nama_project']}_{row[f'id_detail_{stage}']}"):
-                st.session_state[f'id_detail_{stage}'] = row[f'id_detail_{stage}']
-                # st.session_state.page = 'history_secure_coding' 
-                st.rerun()
+            st.session_state[f'id_detail_{stage}'] = row[f'id_detail_{stage}']
+            st.session_state['jenis_id'] = row['ddj']  # Simpan jenis_id (ddj)
+            st.session_state['stage'] = stage  # Simpan stage
+            st.session_state['page'] = 'history_ciso'  # Redirect ke halaman history_ciso
+            st.rerun()
