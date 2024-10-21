@@ -59,13 +59,18 @@ def get_status_step_detail():
 def main_page():
     if st.button('Back'):
         st.session_state['page'] = 'main_page'
+    
     st.subheader('Project Page')
+    
     if st.button("Create New Project"):
         st.session_state['page'] = 'create_project_page'
 
+    # Mendapatkan koneksi database
     conn = get_database_connection()
     cursor = conn.cursor(dictionary=True)
-    query = """
+
+    # Base query
+    base_query = """
         SELECT 
             p.project_id,
             p.nama_project,
@@ -109,17 +114,30 @@ def main_page():
             user u ON p.pic = u.id
         LEFT JOIN 
             status_step stat_sp ON p.previous = stat_sp.id_status_detail
-        LEFT JOIN
-            status_step_detail stat_sc ON p.current = stat_sc.id_status_detail
+        LEFT JOIN 
+            status_step stat_sc ON p.current = stat_sc.id_status_detail
         LEFT JOIN 
             status_step stat_sn ON p.next = stat_sn.id_status_detail
     """
-    cursor.execute(query)
+    
+    user_role = st.session_state.get('user_role', '')
+    
+    if user_role == 'pm':
+        pm_id = st.session_state.get('user_id', None)  # Mengambil ID PM dari session
+        query = base_query + " WHERE p.pic = %s ORDER BY p.nama_project ASC"
+        cursor.execute(query, (pm_id,))
+    else:
+        query = base_query + " ORDER BY p.nama_project ASC"
+        cursor.execute(query)
+    
     projects = cursor.fetchall()
+
     cursor.close()
     conn.close()
+
     st.write('---')
-    col1, col2, col3, col4, col5, col6, col7, col8,col9 , col10, col11, col12, col13= st.columns([1, 4,3,3,3,3,3,3,3,3,3,3,3])
+    col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13 = st.columns([1, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2])
+    
     with col1:
         st.write('No')
     with col2:
@@ -141,22 +159,24 @@ def main_page():
     with col13:
         st.write('Action')
     with col10:
-        st.write('Previous Stage')
+        st.write('Previous')
     with col11:
-        st.write('Current Stage')
+        st.write('Current')
     with col12:
-        st.write('Next Stage')
+        st.write('Next')
+    
     st.write('---')
 
     if projects:
         for idx, project in enumerate(projects, start=1):
-            col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13 = st.columns([1, 4, 3, 3, 3, 3, 3, 3, 3, 3,3,3,3])
+            col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13 = st.columns([1, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2])
+            
             with col1:
-                st.write(idx)  # Nomor
+                st.write(idx)  # Nomor urut
             with col2:
                 st.write(project['nama_project'])  # Nama Project
             with col3:
-                st.write(project['pm'])  # PIC Project
+                st.write(project['pm'])  # PIC Project (PM)
             with col4:
                 st.write(project['design_pic'])  # PIC Design
             with col5:
@@ -170,16 +190,17 @@ def main_page():
             with col9:
                 st.write(project['monitor_pic'])  # PIC Monitor
             with col13:
-                # st.button('Edit', key=f'editProj_{idx}')
                 if st.button('Edit', key=f'editProj_{idx}'):
                     st.session_state['page'] = 'edit_project_page'
                     st.session_state['project_id'] = project['project_id']
             with col10:
-                st.write(project['stat_sp'])
+                st.write(project['stat_sp'])  # Previous Stage
             with col11:
-                st.write(project['stat_sc'])
+                st.write(project['stat_sc'])  # Current Stage
             with col12:
-                st.write(project['stat_sn'])
+                st.write(project['stat_sn'])  # Next Stage
+            
+            st.write('---')
 
 
 def create_project_page():

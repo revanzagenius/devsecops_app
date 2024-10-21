@@ -3,6 +3,8 @@ from develop import history_secure_coding, history_code_authentication, history_
 from build import history_iast, history_sast, history_secret_management, history_sca
 from deploy import hardening_page, config_page
 from test import history_pentest, history_dast
+from design import history_secure_sdlc, history_threat_model
+from monitor import history_rasp, history_audit, history_patch
 
 
 def main_page():
@@ -33,17 +35,17 @@ def main_page():
             elif id_jenis == 'devs-3':
                 history_repository_access_control(id_detail)
             elif id_jenis == 'ds-1':
-                st.write("Design - SDLC (design)")
+                history_secure_sdlc(id_detail)
             elif id_jenis == 'ds-2':
-                st.write("Design - Threat Model (design)")
+                history_threat_model(id_detail)
             elif id_jenis == 'om-1':
-                st.write("Operate / Monitor - 1 (monitor)")
+                history_rasp(id_detail)
             elif id_jenis == 'om-2':
-                st.write("Operate / Monitor - 2 (monitor)")
+                history_audit(id_detail)
             elif id_jenis == 'om-3':
                 st.write("Operate / Monitor - 3 (monitor)")
             elif id_jenis == 'om-4':
-                st.write("Operate / Monitor - 4 (monitor)")
+                history_patch(id_detail)
             elif id_jenis == 't-1':
                 st.write("Test - 1 (test)")
             elif id_jenis == 't-2':
