@@ -16,9 +16,8 @@ def main_page():
     st.subheader('CISO Page')
 
     # st.image("images/devsecops.png", width=500)
-    col1, col2, col3 = st.columns([1, 1, 1])  # Kolom 1 dan 3 lebih kecil dari kolom 2
+    col1, col2, col3 = st.columns([1,3,2])  # Kolom 1 dan 3 lebih kecil dari kolom 2
 
-    # Tempatkan gambar di kolom kedua
     with col2:
         # st.image("images/devsecops.png", width=800)
         st.image("images/detail_devsecops.png", width=800)

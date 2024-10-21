@@ -86,6 +86,9 @@ def render_page(jenis_id, page_name, pdf_prefix, stage):
     elif user_role in ('develop', 'design', 'build','test','deploy','monitor'):
         query = base_query + " AND d.pic = %s ORDER BY ed.tgl DESC"
         cursor.execute(query, (jenis_id, user_id))
+    elif user_role =='pm':
+        query = base_query + " AND p.pic = %s ORDER BY ed.tgl DESC"
+        cursor.execute(query, (jenis_id, user_id,))
 
     results = cursor.fetchall()
 

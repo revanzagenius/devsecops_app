@@ -5,25 +5,25 @@ import design
 
 
 def show_button(button_name, user_role):
-    if user_role == 'admin' or user_role == button_name.lower():
+    if user_role == 'admin' or user_role =='pm' or user_role == button_name.lower():
         if st.button(button_name, use_container_width=True):
             if button_name.lower() == 'design':
                 st.session_state.page = 'design_page'
-            if button_name.lower() == 'develop':
+            elif button_name.lower() == 'develop':
                 st.session_state.page = 'develop_page'
-            if button_name.lower() == 'build':
+            elif button_name.lower() == 'build':
                 st.session_state.page = 'build_page'
-            if button_name.lower() == 'test':
+            elif button_name.lower() == 'test':
                 st.session_state.page = 'test_page'
-            if button_name.lower() == 'deploy':
+            elif button_name.lower() == 'deploy':
                 st.session_state.page = 'deploy_page'
-            if button_name.lower() == 'monitor':
+            elif button_name.lower() == 'monitor':
                 st.session_state.page = 'monitor_page'
             else:
                 st.write(button_name)
 
 
-def get_all_projects():
+def get_all_projects(pm_id=None):
     conn = get_database_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -50,7 +50,13 @@ def get_all_projects():
         LEFT JOIN
             status_step ss_next ON p.next = ss_next.id_status_detail
         """
-        cursor.execute(query)
+        
+        if pm_id:
+            query += " WHERE p.pic = %s"
+            cursor.execute(query, (pm_id,))
+        else:
+            cursor.execute(query)
+        
         return cursor.fetchall()
     except Exception as e:
         st.error(f"An error occurred: {e}")
@@ -91,28 +97,28 @@ def display_all_projects(projects):
                 st.write(project['current'])
             with col6:
                 st.write(project['next'])
-    # if projects:
-    #     df = pd.DataFrame(projects)
-    #     columns_order = ['nama_project', 'PIC', 'previous', 'current', 'next', 'remarks', 'evidence']
-    #     df = df[columns_order]
-    #     st.dataframe(df, hide_index=True)
-    # else:
-    #     st.write("No projects found.")
+
 
 def main_page():
     if st.button('Back'):
         st.session_state['page'] = 'main_page'
+    
     st.subheader('Stage DevSecOps Page')
 
     user_role = st.session_state.get('user', {}).get('role', '')
+    pm_id = st.session_state.get('user', {}).get('id', None)  # Mendapatkan user ID PM yang login
 
     stages = ["Design", "Develop", "Build", "Test", "Deploy", "Monitor"]
 
     for stage in stages:
         show_button(stage, user_role)
-    if user_role == 'admin':
-        projects = get_all_projects()
-        display_all_projects(projects)
-
-
     
+    if user_role == 'admin':
+        projects = get_all_projects()  # Admin bisa melihat semua proyek
+        display_all_projects(projects)
+    elif user_role == 'pm':
+        if pm_id:
+            projects = get_all_projects(pm_id=pm_id)  # PM hanya bisa melihat proyek mereka sendiri
+            display_all_projects(projects)
+        else:
+            st.write("PM ID tidak ditemukan.")
