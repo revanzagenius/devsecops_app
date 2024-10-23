@@ -12,7 +12,7 @@ def main_page():
         st.session_state.page = 'stage'
         st.rerun()
         
-    st.title("Test page")
+    st.title("Deploy page")
     st.markdown('---')
 
     col1, col2 = st.columns(2)

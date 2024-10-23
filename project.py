@@ -115,7 +115,7 @@ def main_page():
         LEFT JOIN 
             status_step stat_sp ON p.previous = stat_sp.id_status_detail
         LEFT JOIN 
-            status_step stat_sc ON p.current = stat_sc.id_status_detail
+            status_step_detail stat_sc ON p.current = stat_sc.id_status_detail
         LEFT JOIN 
             status_step stat_sn ON p.next = stat_sn.id_status_detail
     """
@@ -189,10 +189,17 @@ def main_page():
                 st.write(project['deploy_pic'])  # PIC Deploy
             with col9:
                 st.write(project['monitor_pic'])  # PIC Monitor
+            # Di dalam loop projects di main_page()
             with col13:
-                if st.button('Edit', key=f'editProj_{idx}'):
-                    st.session_state['page'] = 'edit_project_page'
-                    st.session_state['project_id'] = project['project_id']
+                col13_1, col13_2 = st.columns(2)
+                with col13_1:
+                    if st.button(':material/edit:', key=f'editProj_{idx}'):
+                        st.session_state['page'] = 'edit_project_page'
+                        st.session_state['project_id'] = project['project_id']
+                with col13_2:
+                    if st.button(':material/edit_note:', key=f'editStatus_{idx}'):
+                        st.session_state['page'] = 'edit_project_status'
+                        st.session_state['project_id'] = project['project_id']
             with col10:
                 st.write(project['stat_sp'])  # Previous Stage
             with col11:
@@ -202,6 +209,74 @@ def main_page():
             
             st.write('---')
 
+def edit_status_page():
+    if st.button('Back'):
+        st.session_state['page'] = 'project'
+        st.rerun()
+    
+    project_id = st.session_state['project_id']
+    conn = get_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Fetch existing project status
+    query = """
+        SELECT
+            p.project_id,
+            p.nama_project,
+            p.previous,
+            p.current,
+            p.next
+        FROM project p
+        WHERE p.project_id = %s
+    """
+    cursor.execute(query, (project_id,))
+    project_data = cursor.fetchone()
+    cursor.close()
+
+    st.subheader(f"Edit Status - {project_data['nama_project']}")
+
+    # Get the available status options
+    status_steps = get_status_step()
+    status_options = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps}}
+
+    status_steps2 = get_status_step_detail()
+    status_options2 = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps2}}
+
+    with st.form("edit_status"):
+        previous = st.selectbox(
+            "Previous Stage",
+            options=list(status_options.keys()),
+            index=list(status_options.values()).index(project_data['previous'])
+        )
+        current = st.selectbox(
+            "Current Stage",
+            options=list(status_options2.keys()),
+            index=list(status_options2.values()).index(project_data['current'])
+        )
+        next_stage = st.selectbox(
+            "Next Stage",
+            options=list(status_options.keys()),
+            index=list(status_options.values()).index(project_data['next'])
+        )
+
+        if st.form_submit_button("Update Status"):
+            conn = get_database_connection()
+            cursor = conn.cursor()
+
+            previous_id = status_options[previous]
+            current_id = status_options2[current]
+            next_id = status_options[next_stage]
+
+            query = "UPDATE project SET previous = %s, current = %s, next = %s WHERE project_id = %s"
+            cursor.execute(query, (previous_id, current_id, next_id, project_id))
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+
+            st.success("Status updated successfully!")
+            st.session_state['page'] = 'project'
+            st.rerun()
 
 def create_project_page():
     if st.button('Back'):
@@ -333,6 +408,7 @@ def create_project_page():
             cursor.close()
             conn.close()
             st.success("Project created successfully!")
+            st.rerun()
 
 def update_pic_if_changed(new_pic_id, old_pic_id, table, id_column, id_value):
     if new_pic_id != old_pic_id:
@@ -355,23 +431,140 @@ def user_dropdown(role, label, default=None):
     pic_id = next((user['id'] for user in users if user['username'] == pic_username), None)
     return pic_id
 
+# def edit_project_page():
+#     if st.button('Back'):
+#         st.session_state['page'] = 'project'
+#         st.rerun()
+#     project_id = st.session_state['project_id']
+#     conn = get_database_connection()
+#     cursor = conn.cursor(dictionary=True)
+
+#     # Fetch existing project data including statuses and PICs
+#     # Fetch existing project data including statuses and PICs
+#     query = """
+#         SELECT
+#             p.project_id,
+#             p.nama_project,
+#             p.previous,
+#             p.current,
+#             p.next,
+#             d.pic as old_design_pic,
+#             dv.pic as old_develop_pic,
+#             b.pic as old_build_pic,
+#             t.pic as old_test_pic,
+#             dp.pic as old_deploy_pic,
+#             m.pic as old_monitor_pic,
+#             p.pic as old_pm_pic,
+#             ud.username as design_pic_username,
+#             udv.username as develop_pic_username,
+#             ub.username as build_pic_username,
+#             ut.username as test_pic_username,
+#             udp.username as deploy_pic_username,
+#             um.username as monitor_pic_username,
+#             u.username as pm_username,
+#             p.design_id, p.develop_id, p.build_id, p.test_id, p.deploy_id, p.monitor_id
+#         FROM project p
+#         LEFT JOIN design d ON p.design_id = d.design_id
+#         LEFT JOIN user ud ON d.pic = ud.id
+#         LEFT JOIN develop dv ON p.develop_id = dv.develop_id
+#         LEFT JOIN user udv ON dv.pic = udv.id
+#         LEFT JOIN build b ON p.build_id = b.build_id
+#         LEFT JOIN user ub ON b.pic = ub.id
+#         LEFT JOIN test t ON p.test_id = t.test_id
+#         LEFT JOIN user ut ON t.pic = ut.id
+#         LEFT JOIN deploy dp ON p.deploy_id = dp.deploy_id
+#         LEFT JOIN user udp ON dp.pic = udp.id
+#         LEFT JOIN monitor m ON p.monitor_id = m.monitor_id
+#         LEFT JOIN user um ON m.pic = um.id
+#         LEFT JOIN user u ON p.pic = u.id
+#         WHERE p.project_id = %s
+#     """
+#     cursor.execute(query, (project_id,))
+#     project_data = cursor.fetchone()
+#     cursor.close()
+
+#     # Get the available status options
+#     status_steps = get_status_step()
+#     status_options = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps}}
+
+#     status_steps2 = get_status_step_detail()
+#     status_options2 = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps2}}
+
+#     with st.form("edit_project"):
+#         new_nama_project = st.text_input("Nama Project", project_data['nama_project'])
+
+#         pic_pm = user_dropdown('pm', "PIC PM", default=project_data['pm_username'])
+#         pic_design = user_dropdown('design', "PIC Design", default=project_data['design_pic_username'])
+#         pic_develop = user_dropdown('develop', "PIC Develop", default=project_data['develop_pic_username'])
+#         pic_build = user_dropdown('build', "PIC Build", default=project_data['build_pic_username'])
+#         pic_test = user_dropdown('test', "PIC Test", default=project_data['test_pic_username'])
+#         pic_deploy = user_dropdown('deploy', "PIC Deploy", default=project_data['deploy_pic_username'])
+#         pic_monitor = user_dropdown('monitor', "PIC Monitor", default=project_data['monitor_pic_username'])
+
+#         # Current and new status selections (Previous, Current, Next)
+#         previous = st.selectbox(
+#             "Previous Stage",
+#             options=list(status_options.keys()),
+#             index=list(status_options.values()).index(project_data['previous'])
+#         )
+#         current = st.selectbox(
+#             "Current Stage",
+#             options=list(status_options2.keys()),
+#             index=list(status_options2.values()).index(project_data['current'])
+#         )
+#         next_stage = st.selectbox(
+#             "Next Stage",
+#             options=list(status_options.keys()),
+#             index=list(status_options.values()).index(project_data['next'])
+#         )
+
+#         if st.form_submit_button("Update Project"):
+#             conn = get_database_connection()
+#             cursor = conn.cursor()
+
+#             # Update nama_project if it has changed
+#             if new_nama_project != project_data['nama_project']:
+#                 query = "UPDATE project SET nama_project = %s WHERE project_id = %s"
+#                 cursor.execute(query, (new_nama_project, project_id))
+#                 conn.commit()
+
+#             update_pic_if_changed(pic_design, project_data['old_design_pic'], 'design', 'design_id', project_data['design_id'])
+#             update_pic_if_changed(pic_develop, project_data['old_develop_pic'], 'develop', 'develop_id', project_data['develop_id'])
+#             update_pic_if_changed(pic_build, project_data['old_build_pic'], 'build', 'build_id', project_data['build_id'])
+#             update_pic_if_changed(pic_test, project_data['old_test_pic'], 'test', 'test_id', project_data['test_id'])
+#             update_pic_if_changed(pic_deploy, project_data['old_deploy_pic'], 'deploy', 'deploy_id', project_data['deploy_id'])
+#             update_pic_if_changed(pic_monitor, project_data['old_monitor_pic'], 'monitor', 'monitor_id', project_data['monitor_id'])
+#             update_pic_if_changed(pic_pm, project_data['old_pm_pic'], 'project', 'project_id', project_id)
+
+#             previous_id = status_options[previous]
+#             current_id = status_options2[current]
+#             next_id = status_options[next_stage]
+
+#             if previous_id != project_data['previous'] or current_id != project_data['current'] or next_id != project_data['next']:
+#                 query = "UPDATE project SET previous = %s, current = %s, next = %s WHERE project_id = %s"
+#                 cursor.execute(query, (previous_id, current_id, next_id, project_id))
+#                 conn.commit()
+
+#             cursor.close()
+#             conn.close()
+
+#             st.success("Project updated successfully!")
+#             st.session_state['page'] = 'project'
+#             st.rerun()
 def edit_project_page():
     if st.button('Back'):
         st.session_state['page'] = 'project'
         st.rerun()
+
     project_id = st.session_state['project_id']
     conn = get_database_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Fetch existing project data including statuses and PICs
-    # Fetch existing project data including statuses and PICs
+    # Fetch existing project data including PICs (without statuses)
     query = """
         SELECT
             p.project_id,
             p.nama_project,
-            p.previous,
-            p.current,
-            p.next,
             d.pic as old_design_pic,
             dv.pic as old_develop_pic,
             b.pic as old_build_pic,
@@ -407,16 +600,10 @@ def edit_project_page():
     project_data = cursor.fetchone()
     cursor.close()
 
-    # Get the available status options
-    status_steps = get_status_step()
-    status_options = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps}}
-
-    status_steps2 = get_status_step_detail()
-    status_options2 = {'-': '-', **{step['deskripsi']: step['id_status_detail'] for step in status_steps2}}
-
     with st.form("edit_project"):
         new_nama_project = st.text_input("Nama Project", project_data['nama_project'])
 
+        # PIC dropdowns (remove status section)
         pic_pm = user_dropdown('pm', "PIC PM", default=project_data['pm_username'])
         pic_design = user_dropdown('design', "PIC Design", default=project_data['design_pic_username'])
         pic_develop = user_dropdown('develop', "PIC Develop", default=project_data['develop_pic_username'])
@@ -424,23 +611,6 @@ def edit_project_page():
         pic_test = user_dropdown('test', "PIC Test", default=project_data['test_pic_username'])
         pic_deploy = user_dropdown('deploy', "PIC Deploy", default=project_data['deploy_pic_username'])
         pic_monitor = user_dropdown('monitor', "PIC Monitor", default=project_data['monitor_pic_username'])
-
-        # Current and new status selections (Previous, Current, Next)
-        previous = st.selectbox(
-            "Previous Stage",
-            options=list(status_options.keys()),
-            index=list(status_options.values()).index(project_data['previous'])
-        )
-        current = st.selectbox(
-            "Current Stage",
-            options=list(status_options2.keys()),
-            index=list(status_options2.values()).index(project_data['current'])
-        )
-        next_stage = st.selectbox(
-            "Next Stage",
-            options=list(status_options.keys()),
-            index=list(status_options.values()).index(project_data['next'])
-        )
 
         if st.form_submit_button("Update Project"):
             conn = get_database_connection()
@@ -452,6 +622,7 @@ def edit_project_page():
                 cursor.execute(query, (new_nama_project, project_id))
                 conn.commit()
 
+            # Update PICs if changed
             update_pic_if_changed(pic_design, project_data['old_design_pic'], 'design', 'design_id', project_data['design_id'])
             update_pic_if_changed(pic_develop, project_data['old_develop_pic'], 'develop', 'develop_id', project_data['develop_id'])
             update_pic_if_changed(pic_build, project_data['old_build_pic'], 'build', 'build_id', project_data['build_id'])
@@ -459,15 +630,6 @@ def edit_project_page():
             update_pic_if_changed(pic_deploy, project_data['old_deploy_pic'], 'deploy', 'deploy_id', project_data['deploy_id'])
             update_pic_if_changed(pic_monitor, project_data['old_monitor_pic'], 'monitor', 'monitor_id', project_data['monitor_id'])
             update_pic_if_changed(pic_pm, project_data['old_pm_pic'], 'project', 'project_id', project_id)
-
-            previous_id = status_options[previous]
-            current_id = status_options2[current]
-            next_id = status_options[next_stage]
-
-            if previous_id != project_data['previous'] or current_id != project_data['current'] or next_id != project_data['next']:
-                query = "UPDATE project SET previous = %s, current = %s, next = %s WHERE project_id = %s"
-                cursor.execute(query, (previous_id, current_id, next_id, project_id))
-                conn.commit()
 
             cursor.close()
             conn.close()

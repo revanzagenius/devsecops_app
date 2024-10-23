@@ -170,6 +170,7 @@ def render_table_row(row, status_options, idx, pdf_prefix, stage):
             st.session_state.page = f"history_{pdf_prefix.lower()}"
             st.session_state[f'id_detail_{stage}'] = row[f'id_detail_{stage}']
             st.rerun()
+            # st.write(f"history_{pdf_prefix.lower()}")
 
 def create_evidence_form(id_detail_stage, status_options, stage):
     st.subheader(f'Create Evidence for {stage.capitalize()}')
@@ -230,7 +231,7 @@ def display_history(id_detail_stage, page_name, back_page_name, file_prefix, sta
             st.session_state.page = back_page_name
             st.rerun()
 
-    st.subheader(f'History {page_name}')
+    st.subheader(f'History {stage.title()} - {page_name}')
 
     conn = get_database_connection()
     cursor = conn.cursor(dictionary=True)
