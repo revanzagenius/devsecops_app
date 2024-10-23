@@ -17,7 +17,7 @@ def main_page():
     if col2.button('Audit', use_container_width=True):
         st.session_state.page = 'audit_page'
     if col3.button('Monitor', use_container_width=True):
-        # st.session_state.page = 'monitor_page'
+        st.session_state.page = 'monitor2_page'
         st.write('')
     if col4.button('Patch', use_container_width=True):
         st.session_state.page = 'patch_page'
@@ -28,8 +28,8 @@ def rasp_page():
 def audit_page():
     render_page('om-2', 'Audit', 'audit', 'monitor')
 
-def monitor_page():
-    render_page('om-3', 'Monitor', 'monitor', 'monitor')
+def monitor2_page():
+    render_page('om-3', 'Monitor', 'monitor2', 'monitor')
 
 def patch_page():
     render_page('om-4', 'Patch', 'patch', 'monitor')
@@ -41,7 +41,7 @@ def history_audit(id_detail_monitor):
     display_history(id_detail_monitor, 'Audit', 'audit_page', 'audit', 'monitor')
 
 def history_monitor(id_detail_monitor):
-    display_history(id_detail_monitor, 'Monitor', 'monitor_page', 'monitor', 'monitor')
+    display_history(id_detail_monitor, 'Monitor', 'monitor2_page', 'monitor2', 'monitor')
 
 def history_patch(id_detail_monitor):
     display_history(id_detail_monitor, 'Patch', 'patch_page', 'patch', 'monitor')
