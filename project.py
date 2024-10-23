@@ -115,7 +115,7 @@ def main_page():
         LEFT JOIN 
             status_step stat_sp ON p.previous = stat_sp.id_status_detail
         LEFT JOIN 
-            status_step stat_sc ON p.current = stat_sc.id_status_detail
+            status_step_detail stat_sc ON p.current = stat_sc.id_status_detail
         LEFT JOIN 
             status_step stat_sn ON p.next = stat_sn.id_status_detail
     """
@@ -333,6 +333,7 @@ def create_project_page():
             cursor.close()
             conn.close()
             st.success("Project created successfully!")
+            st.rerun()
 
 def update_pic_if_changed(new_pic_id, old_pic_id, table, id_column, id_value):
     if new_pic_id != old_pic_id:
